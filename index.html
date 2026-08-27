@@ -204,6 +204,23 @@ main{padding:26px 32px 60px;max-width:1180px}
 .sheet .form{grid-template-columns:1fr 1fr}
 .sheet-acts{display:flex;gap:9px;justify-content:flex-end;margin-top:16px}
 
+.gate{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:20px;z-index:200}
+.gate.off{display:none}
+.gcard{background:var(--card);border-radius:16px;padding:30px 32px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.gbrand{font-family:'Bitter',serif;font-size:26px;font-weight:600;margin-bottom:2px}
+.gsub{font-size:13.5px;color:var(--ink-3);margin-bottom:22px}
+.gate .fld{margin-bottom:12px}
+.gate .fld input{padding:11px 13px;font-size:15px}
+.gbtn{width:100%;padding:12px;border-radius:9px;background:var(--firuza);color:#fff;font-size:15px;font-weight:500;border:none;margin-top:6px;transition:.13s}
+.gbtn:hover{background:var(--firuza-dim)}
+.gbtn:disabled{opacity:.55;cursor:default}
+.gswap{background:none;border:none;color:var(--firuza);font-size:13.5px;text-decoration:underline;margin-top:16px;display:block;width:100%;text-align:center}
+.glocal{background:none;border:none;color:var(--ink-3);font-size:12.5px;text-decoration:underline;margin-top:12px;display:block;width:100%;text-align:center}
+.gerr{color:var(--anor);font-size:13px;min-height:18px;margin-top:8px;text-align:center}
+.who{display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(255,255,255,.07);border-radius:8px;padding:8px 10px;font-size:12.5px;color:#B9CBC9}
+.who b{color:#EAF2F0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
+.who button{color:#8FA9AC;font-size:11.5px;text-decoration:underline;flex:none}
+.sync{font-size:11px;color:#5E7A7E;padding:0 8px;margin-top:6px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:10px 20px;border-radius:99px;font-size:13.5px;opacity:0;transition:.28s;z-index:99;pointer-events:none}
 .toast.on{transform:translateX(-50%) translateY(0);opacity:1}
 
@@ -225,6 +242,19 @@ main{padding:26px 32px 60px;max-width:1180px}
 </style>
 </head>
 <body>
+<div class="gate" id="gate">
+  <div class="gcard">
+    <div class="gbrand">Дафтар</div>
+    <div class="gsub" id="g-sub">Войдите, чтобы бюджет открывался и на компьютере, и на телефоне</div>
+    <div class="fld"><label>Почта</label><input type="email" id="g-mail" autocomplete="email" placeholder="pochta@example.com"></div>
+    <div class="fld"><label>Пароль</label><input type="password" id="g-pass" autocomplete="current-password" placeholder="не короче 6 знаков"></div>
+    <button class="gbtn" id="g-go" onclick="gateGo()">Войти</button>
+    <div class="gerr" id="g-err"></div>
+    <button class="gswap" id="g-swap" onclick="gateSwap()">Нет аккаунта? Создать</button>
+    <button class="glocal" onclick="gateLocal()">Продолжить без входа — только на этом устройстве</button>
+  </div>
+</div>
+
 <div class="shell">
   <aside class="side">
     <div class="brand"><b>Дафтар</b><span>бюджет · планерка</span></div>
@@ -240,7 +270,11 @@ main{padding:26px 32px 60px;max-width:1180px}
       <button data-v="report"><span class="ico">▥</span>Отчёты</button>
       <button data-v="setup"><span class="ico">⚙</span>Настройки</button>
     </nav>
-    <div class="side-foot">Данные хранятся в этом браузере.<br><button onclick="exportJSON()">Сохранить копию</button></div>
+    <div class="side-foot">
+      <div class="who" id="who"></div>
+      <div class="sync" id="sync"></div>
+      <button onclick="exportJSON()" style="margin-top:6px">Сохранить копию</button>
+    </div>
   </aside>
 
   <main>
@@ -480,6 +514,30 @@ main{padding:26px 32px 60px;max-width:1180px}
 
 <div class="toast" id="toast"></div>
 
+<script src="config.js"></script>
+<script>window.cloudReady=new Promise(r=>{window.__cr=r})</script>
+<script type="module">
+const cfg=window.FIREBASE_CONFIG||{};
+try{
+  if(cfg.apiKey){
+    const B='https://www.gstatic.com/firebasejs/10.12.0/';
+    const {initializeApp}=await import(B+'firebase-app.js');
+    const {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,
+           onAuthStateChanged,signOut,setPersistence,browserLocalPersistence}=await import(B+'firebase-auth.js');
+    const {getFirestore,doc,getDoc,setDoc}=await import(B+'firebase-firestore.js');
+    const app=initializeApp(cfg),auth=getAuth(app),fs=getFirestore(app);
+    await setPersistence(auth,browserLocalPersistence);
+    window.CLOUD={on:true,
+      signUp:(e,p)=>createUserWithEmailAndPassword(auth,e,p),
+      signIn:(e,p)=>signInWithEmailAndPassword(auth,e,p),
+      out:()=>signOut(auth),
+      watch:cb=>onAuthStateChanged(auth,cb),
+      get:async u=>{const s=await getDoc(doc(fs,'users',u));return s.exists()?s.data().db:null},
+      put:(u,data)=>setDoc(doc(fs,'users',u),{db:data,at:Date.now()})};
+  }else window.CLOUD={on:false};
+}catch(e){console.error(e);window.CLOUD={on:false,fail:true}}
+window.__cr();
+</script>
 <script>
 /* ============ модель ============ */
 const KEY='daftar-v3';
@@ -502,7 +560,7 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 function mkCats(p){return PRESETS[p].map(([n,c,pl])=>({id:uid(),name:n,color:c,plan:pl}))}
 
 function seed(){
-  db={active:'main',tasks:[],budgets:{main:{name:'Личный',cats:mkCats('std'),roll:true,start:0,resets:{},goals:[],tx:[]}}};
+  db={active:'main',tasks:[],budgets:{main:{name:'Личный',cats:[],roll:true,start:0,resets:{},goals:[],tx:[]}}};
 }
 function isEmpty(){return !B().tx.length&&!db.tasks.length&&!B().goals.length}
 function migrate(old){
@@ -513,10 +571,19 @@ function migrate(old){
   return {active:'main',tasks:old.tasks||[],budgets:{main:{name:'Личный',cats,roll:true,start:0,goals:[],
     resets:{},tx:(old.tx||[]).map(t=>({...t,cat:t.cat&&map[t.cat]&&byName[map[t.cat]]?byName[map[t.cat]].id:null}))}}};
 }
+let userId=null, cloudOn=false, syncTimer=null;
+const cacheKey=()=>userId?KEY+'-'+userId:KEY;
+
 async function load(){
   let raw=null;
-  try{ if(window.storage){const r=await window.storage.get(KEY);raw=r&&r.value;} }catch(e){}
-  if(!raw){try{raw=localStorage.getItem(KEY)}catch(e){}}
+  try{raw=localStorage.getItem(cacheKey())}catch(e){}
+  if(cloudOn&&userId){
+    try{
+      const remote=await CLOUD.get(userId);
+      if(remote)raw=remote;
+      setSync('синхронизировано');
+    }catch(e){setSync('нет связи — работаем локально')}
+  }
   if(raw){try{db=JSON.parse(raw)}catch(e){seed()}} else seed();
   if(!db.budgets||!Object.keys(db.budgets).length)seed();
   if(!db.budgets[db.active])db.active=Object.keys(db.budgets)[0];
@@ -524,11 +591,71 @@ async function load(){
 }
 async function save(){
   const raw=JSON.stringify(db);
-  try{if(window.storage)await window.storage.set(KEY,raw)}catch(e){}
-  try{localStorage.setItem(KEY,raw)}catch(e){}
+  try{localStorage.setItem(cacheKey(),raw)}catch(e){}
+  if(!(cloudOn&&userId))return;
+  setSync('сохраняю…');
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(async()=>{
+    try{await CLOUD.put(userId,raw);setSync('синхронизировано')}
+    catch(e){setSync('не сохранилось в облако')}
+  },900);
+}
+function setSync(t){const el=document.getElementById('sync');if(el)el.textContent=t}
+
+/* ============ вход ============ */
+let gateMode='in';
+function gateSwap(){
+  gateMode=gateMode==='in'?'up':'in';
+  document.getElementById('g-go').textContent=gateMode==='in'?'Войти':'Создать аккаунт';
+  document.getElementById('g-swap').textContent=gateMode==='in'?'Нет аккаунта? Создать':'Уже есть аккаунт? Войти';
+  document.getElementById('g-pass').autocomplete=gateMode==='in'?'current-password':'new-password';
+  document.getElementById('g-err').textContent='';
+}
+const AUTH_ERR={
+  'auth/invalid-email':'Почта написана с ошибкой.',
+  'auth/missing-password':'Введите пароль.',
+  'auth/weak-password':'Пароль короче 6 знаков.',
+  'auth/email-already-in-use':'Такая почта уже занята — попробуйте войти.',
+  'auth/invalid-credential':'Почта или пароль не подходят.',
+  'auth/wrong-password':'Пароль не подходит.',
+  'auth/user-not-found':'Такой почты нет — создайте аккаунт.',
+  'auth/too-many-requests':'Слишком много попыток. Подождите пару минут.',
+  'auth/network-request-failed':'Нет связи с интернетом.'
+};
+async function gateGo(){
+  const mail=document.getElementById('g-mail').value.trim();
+  const pass=document.getElementById('g-pass').value;
+  const err=document.getElementById('g-err'),btn=document.getElementById('g-go');
+  if(!mail){err.textContent='Введите почту.';return}
+  if(pass.length<6){err.textContent='Пароль не короче 6 знаков.';return}
+  err.textContent='';btn.disabled=true;btn.textContent='Минутку…';
+  try{
+    await (gateMode==='in'?CLOUD.signIn(mail,pass):CLOUD.signUp(mail,pass));
+  }catch(e){
+    err.textContent=AUTH_ERR[e.code]||'Не получилось войти. Попробуйте ещё раз.';
+    btn.disabled=false;btn.textContent=gateMode==='in'?'Войти':'Создать аккаунт';
+  }
+}
+async function gateLocal(){
+  userId=null;cloudOn=false;
+  document.getElementById('gate').classList.add('off');
+  setSync('');
+  await boot();
+}
+async function signOutNow(){
+  if(!confirm('Выйти из аккаунта? Данные останутся в облаке.'))return;
+  clearTimeout(syncTimer);
+  try{await CLOUD.put(userId,JSON.stringify(db))}catch(e){}
+  await CLOUD.out();
+  location.reload();
+}
+function renderWho(mail){
+  document.getElementById('who').innerHTML=mail
+    ?`<b title="${esc(mail)}">${esc(mail)}</b><button onclick="signOutNow()">Выйти</button>`
+    :`<b>Только это устройство</b>${cloudOn?'<button onclick="location.reload()">Войти</button>':''}`;
 }
 
-/* ============ утилиты ============ */
+/* ============ утилиты ============ *//* ============ утилиты ============ */
 const B=()=>db.budgets[db.active];
 const iso=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
 const today=()=>iso(new Date());
@@ -625,6 +752,11 @@ function renderRollHint(){
 }
 
 /* ============ конверты ============ */
+function usePreset(){
+  if(B().cats.length&&!confirm('В бюджете уже есть конверты. Добавить готовый набор к ним?'))return;
+  mkCats('std').forEach(c=>B().cats.push(c));
+  save();renderAll();toast('Добавлено конвертов: 7');
+}
 function openCat(id){
   editCat=id||null;
   const c=id?cat(id):null;
@@ -1093,13 +1225,44 @@ function wipe(){
 
 /* ============ старт ============ */
 function renderAll(){renderBudgetSel();fillSelects();renderMoney();renderPlan();renderGoals();renderLimits()}
-(async function(){
+
+async function boot(){
   await load();
   document.getElementById('f-date').value=today();
   document.getElementById('t-due').value=today();
   const dates=B().tx.map(t=>t.date).sort();
   cur=new Date(dates.length?dates[dates.length-1]:today());cur.setDate(1);
   renderAll();
+}
+
+(async function(){
+  await window.cloudReady;
+  cloudOn=!!(window.CLOUD&&CLOUD.on);
+  const gate=document.getElementById('gate');
+  if(!cloudOn){
+    document.getElementById('g-sub').textContent=CLOUD&&CLOUD.fail
+      ?'Облако недоступно. Данные сохранятся на этом устройстве.'
+      :'Вход пока не настроен. Данные сохранятся на этом устройстве.';
+    document.getElementById('g-mail').disabled=true;
+    document.getElementById('g-pass').disabled=true;
+    document.getElementById('g-go').disabled=true;
+    document.getElementById('g-swap').style.display='none';
+    renderWho(null);
+    return;
+  }
+  CLOUD.watch(async user=>{
+    if(user){
+      userId=user.uid;
+      gate.classList.add('off');
+      renderWho(user.email);
+      await boot();
+    }else{
+      userId=null;
+      gate.classList.remove('off');
+      const btn=document.getElementById('g-go');
+      btn.disabled=false;btn.textContent=gateMode==='in'?'Войти':'Создать аккаунт';
+    }
+  });
 })();
 </script>
 </body>
