@@ -1,0 +1,58 @@
+{
+  "active": "main",
+  "tasks": [],
+  "budgets": {
+    "main": {
+      "name": "Личный",
+      "roll": true,
+      "start": 0,
+      "goals": [],
+      "tx": [],
+      "cats": [
+        {
+          "id": "c1",
+          "name": "Еда и другое",
+          "color": "#C08A1E",
+          "plan": 3600
+        },
+        {
+          "id": "c2",
+          "name": "Развитие",
+          "color": "#0E7C86",
+          "plan": 1000
+        },
+        {
+          "id": "c3",
+          "name": "Жильё",
+          "color": "#4C6B8A",
+          "plan": 2500
+        },
+        {
+          "id": "c4",
+          "name": "Здоровье",
+          "color": "#B23A48",
+          "plan": 1000
+        },
+        {
+          "id": "c5",
+          "name": "Отдых",
+          "color": "#7A5EA8",
+          "plan": 1000
+        },
+        {
+          "id": "c6",
+          "name": "Хайр",
+          "color": "#2E8B57",
+          "plan": 500
+        },
+        {
+          "id": "c7",
+          "name": "На себя",
+          "color": "#8A6A4F",
+          "plan": 400
+        }
+      ],
+      "resets": {}
+    }
+  }
+}
