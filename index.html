@@ -2,7 +2,8 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#13232B">
 <title>Дафтар — бюджет и планерка</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -224,21 +225,152 @@ main{padding:26px 32px 60px;max-width:1180px}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:10px 20px;border-radius:99px;font-size:13.5px;opacity:0;transition:.28s;z-index:99;pointer-events:none}
 .toast.on{transform:translateX(-50%) translateY(0);opacity:1}
 
-@media (max-width:900px){
-  .shell{grid-template-columns:1fr}
-  .side{position:static;height:auto;flex-direction:row;align-items:center;gap:12px;overflow-x:auto;padding:12px 14px}
-  .brand,.blabel,.side-foot{display:none}
-  .bsel{width:auto;min-width:130px;flex:none}
-  .nav{flex-direction:row;gap:4px}
-  .nav button{white-space:nowrap;padding:7px 11px}
-  main{padding:18px 16px 50px}
-  .g4,.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .ribbon{grid-template-columns:repeat(4,1fr)}
-  .row{grid-template-columns:1fr 96px 30px}
-  .row .d,.row .tag{display:none}
-  .brow{grid-template-columns:96px 1fr 104px}
+.mhead{display:none}
+
+/* ---------- планшет ---------- */
+@media (max-width:1000px){
+  .shell{grid-template-columns:196px 1fr}
+  main{padding:22px 20px 60px}
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .envs{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
 }
+
+/* ---------- телефон ---------- */
+@media (max-width:760px){
+  .shell{grid-template-columns:1fr;display:block}
+
+  /* боковое меню -> нижняя панель вкладок */
+  .side{
+    position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;z-index:60;
+    flex-direction:row;gap:0;padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+    border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -2px 12px rgba(19,35,43,.18);
+  }
+  .brand,.blabel,.side-foot,.side>div:first-of-type{display:none}
+  .nav{flex-direction:row;width:100%;gap:0}
+  .nav button{
+    flex:1;flex-direction:column;gap:3px;padding:7px 2px;min-height:52px;
+    font-size:10.5px;line-height:1.15;text-align:center;justify-content:center;border-radius:9px;
+  }
+  .nav button.on{background:transparent;color:var(--firuza);font-weight:600}
+  .nav button.on .ico{background:var(--firuza);color:#fff;border-radius:8px}
+  .nav .ico{width:26px;height:22px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.13s}
+
+  /* шапка с выбором бюджета */
+  .mhead{
+    display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:40;
+    background:var(--paper);margin:-14px -14px 12px;padding:10px 14px;
+    border-bottom:1px solid var(--line);
+  }
+  .msel{
+    flex:1;min-width:0;border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;
+    background:var(--card);font-size:15px;font-weight:500;appearance:none;
+  }
+  .mwho{font-size:11px;color:var(--ink-3);max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  main{padding:14px 14px calc(78px + env(safe-area-inset-bottom));max-width:100%}
+
+  /* заголовки и переключатель месяца */
+  .head{flex-direction:column;align-items:stretch;gap:12px;margin-bottom:16px}
+  .head h1{font-size:23px}
+  .month{width:100%;justify-content:space-between}
+  .month button{padding:9px 16px;font-size:18px}
+  .month .lbl{flex:1;min-width:0}
+
+  /* карточки */
+  .card{padding:15px 15px;border-radius:12px}
+  .card+.card{margin-top:12px}
+  .grid{gap:10px}
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g2{grid-template-columns:1fr}
+  .stat{padding:13px 14px}
+  .stat .v{font-size:21px}
+  .stat .go{display:none}
+
+  /* конверты — по два в ряд */
+  .envs{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .env{padding:12px 12px 11px}
+  .env .name{font-size:12.5px;padding-right:36px}
+  .env .amt{font-size:17px}
+  .env .of{font-size:11px}
+  .env-add{min-height:80px}
+
+  /* формы в одну колонку, 16px против автозума в iOS */
+  .form{grid-template-columns:1fr;gap:10px}
+  .form .fld[style*="span 2"]{grid-column:span 1 !important}
+  .fld input,.fld select{font-size:16px;padding:10px 12px}
+  .fld label{font-size:11px}
+  .btn{padding:11px 16px;font-size:15px}
+  .btn-sm{padding:7px 12px;font-size:13px}
+
+  /* списки операций */
+  .row{grid-template-columns:1fr auto 32px;gap:8px;padding:12px 2px}
+  .row .d,.row .tag{display:none}
+  .row .t{font-size:14px}
+  .row .a{font-size:15px}
+  .x{font-size:22px;padding:6px 8px}
+
+  /* неделя — горизонтальная лента с прилипанием */
+  .ribbon{
+    display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;
+    margin:0 -14px 14px;padding:0 14px 4px;-webkit-overflow-scrolling:touch;
+  }
+  .ribbon::-webkit-scrollbar{display:none}
+  .day{flex:0 0 116px;scroll-snap-align:start;min-height:104px}
+
+  /* задачи и цели */
+  .task{padding:13px 14px;gap:10px}
+  .task .tt{font-size:14px}
+  .filters{gap:5px}
+  .fbtn{padding:7px 13px;font-size:13px}
+  .search{max-width:100%;flex-basis:100%;padding:9px 14px;font-size:16px}
+  .goal .gacts input{flex:1;width:auto;font-size:16px;padding:8px 10px}
+
+  /* отчёты */
+  .brow{grid-template-columns:1fr;gap:5px}
+  .brow .bval{text-align:left;font-size:12px}
+  .spark{height:96px}
+  .sbar .cap{font-size:9.5px;bottom:-26px}
+
+  /* настройки: строки конвертов */
+  .lrow{grid-template-columns:16px 1fr 88px 30px;gap:8px}
+  .lrow input[type=number]{font-size:15px}
+
+  /* модалки снизу, как нативные шторки */
+  .modal{align-items:flex-end;padding:0}
+  .sheet{
+    max-width:100%;border-radius:16px 16px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));
+    max-height:92vh;overflow-y:auto;
+  }
+  .sheet .form{grid-template-columns:1fr}
+  .sheet-acts{flex-direction:column-reverse;gap:8px}
+  .sheet-acts .btn{width:100%;padding:12px}
+
+  /* экран входа */
+  .gcard{padding:26px 20px;border-radius:14px}
+  .gbrand{font-size:24px}
+  .gate .fld input{font-size:16px}
+  .gbtn{padding:13px}
+
+  .toast{bottom:calc(72px + env(safe-area-inset-bottom));font-size:13px;max-width:88vw;text-align:center}
+}
+
+/* ---------- узкие телефоны ---------- */
+@media (max-width:380px){
+  .nav button{font-size:9.5px}
+  .g4{grid-template-columns:1fr}
+  .envs{grid-template-columns:1fr}
+  .stat .v{font-size:23px}
+}
+
+/* ---------- низкие экраны в альбомной ориентации ---------- */
+@media (max-height:520px) and (orientation:landscape){
+  .side{position:static;flex-direction:column;height:auto}
+  .nav{flex-direction:column}
+  main{padding-bottom:40px}
+}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -278,6 +410,10 @@ main{padding:26px 32px 60px;max-width:1180px}
   </aside>
 
   <main>
+    <div class="mhead">
+      <select class="msel" id="bsel2" onchange="switchBudget(this.value)" aria-label="Бюджет"></select>
+      <span class="mwho" id="mwho"></span>
+    </div>
     <!-- ОБЗОР -->
     <section class="view on" id="v-dash">
       <div class="head">
@@ -653,6 +789,8 @@ function renderWho(mail){
   document.getElementById('who').innerHTML=mail
     ?`<b title="${esc(mail)}">${esc(mail)}</b><button onclick="signOutNow()">Выйти</button>`
     :`<b>Только это устройство</b>${cloudOn?'<button onclick="location.reload()">Войти</button>':''}`;
+  const m=document.getElementById('mwho');
+  if(m)m.innerHTML=mail?`<span onclick="signOutNow()">${esc(mail.split('@')[0])} · выйти</span>`:'без входа';
 }
 
 /* ============ утилиты ============ *//* ============ утилиты ============ */
@@ -705,8 +843,10 @@ function shiftWeek(n){weekRef.setDate(weekRef.getDate()+n*7);renderPlan()}
 /* ============ бюджеты ============ */
 function switchBudget(id){db.active=id;save();renderAll();toast('Бюджет: '+B().name)}
 function renderBudgetSel(){
-  document.getElementById('bsel').innerHTML=Object.entries(db.budgets).map(([id,b])=>
+  const opts=Object.entries(db.budgets).map(([id,b])=>
     `<option value="${id}" ${id===db.active?'selected':''}>${esc(b.name)}</option>`).join('');
+  document.getElementById('bsel').innerHTML=opts;
+  document.getElementById('bsel2').innerHTML=opts;
   document.getElementById('dash-title').textContent=B().name;
   document.getElementById('set-sub').textContent='Активный бюджет: '+B().name;
   document.getElementById('cats-sub').textContent='Статьи бюджета «'+B().name+'» и месячные лимиты';
