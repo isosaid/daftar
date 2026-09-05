@@ -1007,6 +1007,7 @@ function addTx(){
     goalId:gid,desc:desc||('В цель: '+(goal(gid)?goal(gid).name:'')),amt,date});
   document.getElementById('f-amt').value='';document.getElementById('f-desc').value='';
   cur=new Date(date);cur.setDate(1);
+  if(txFilter!=='all'&&txFilter!==type)resetTxFilter();
   save();renderMoney();renderGoals();toast('Записано');
 }
 function delTx(id){B().tx=B().tx.filter(t=>t.id!==id);save();renderMoney();renderGoals();toast('Удалено')}
@@ -1271,6 +1272,10 @@ function rowTx(t){
   if(t.type==='out'){const c=cat(t.cat);tag=c?`<span class="tag"><span class="dot" style="background:${c.color}"></span>${esc(c.name)}</span>`:'<span class="tag">Без конверта</span>'}
   if(t.type==='save'){const g=goal(t.goalId);tag=`<span class="tag"><span class="dot" style="background:#2E8B57"></span>◎ ${esc(g?g.name:'цель')}</span>`}
   const sign=t.type==='in'?'+':'−';
+  let plain='Доход';
+  if(t.type==='out'){const c=cat(t.cat);plain=c?c.name:'Без конверта'}
+  if(t.type==='save'){const g=goal(t.goalId);plain='Цель: '+(g?g.name:'—')}
+  plain=esc(plain);
   return `<div class="row click" onclick="openOp(${t.id})" title="Изменить">
     <span class="d">${t.date.slice(8)}.${t.date.slice(5,7)}</span>
     <span class="t">${esc(t.desc)}<em class="tmeta">${t.date.slice(8)}.${t.date.slice(5,7)} · ${plain}</em></span><span class="tagw">${tag}</span>
