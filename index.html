@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#13232B">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Дафтар">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Дафтар — бюджет и планерка</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -145,6 +152,9 @@ main{padding:26px 32px 60px;max-width:1180px}
 .tag .dot{width:6px;height:6px;border-radius:50%;flex:none}
 .x{color:var(--ink-3);font-size:17px;line-height:1;padding:2px 6px;border-radius:6px}
 .x:hover{background:var(--anor-wash);color:var(--anor)}
+.fnote{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  background:var(--zarhal-wash);color:#7A5510;font-size:13px;padding:9px 12px;border-radius:8px;margin-bottom:8px}
+.fnote button{color:#7A5510;font-size:13px;font-weight:500;text-decoration:underline;flex:none}
 .empty{padding:26px 4px;color:var(--ink-3);font-size:14px;text-align:center}
 .empty b{display:block;color:var(--ink-2);font-weight:500;margin-bottom:3px}
 
@@ -859,6 +869,7 @@ document.getElementById('nav').addEventListener('click',e=>{
   document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.getElementById('v-'+b.dataset.v).classList.add('on');window.scrollTo(0,0);
+  if(b.dataset.v==='budget'&&txFilter!=='all')resetTxFilter();
 });
 document.querySelectorAll('[data-f]').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('[data-f]').forEach(x=>x.classList.remove('on'));b.classList.add('on');taskFilter=b.dataset.f;renderTasks();
@@ -1237,13 +1248,23 @@ function renderEnvs(tx){
     </div>`}).join('');
   document.getElementById('envs').innerHTML=html+`<button class="env-add" onclick="openCat()">＋ конверт</button>`;
 }
+function resetTxFilter(){
+  txFilter='all';
+  document.querySelectorAll('[data-tf]').forEach(x=>x.classList.toggle('on',x.dataset.tf==='all'));
+  renderTx();
+}
+const TF_NAME={in:'только доходы',out:'только расходы',save:'только пополнения целей'};
 function renderTx(){
   const q=(document.getElementById('tx-search').value||'').toLowerCase();
   let tx=monthTx().filter(t=>(!q||t.desc.toLowerCase().includes(q))&&(txFilter==='all'||t.type===txFilter));
   tx.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
-  document.getElementById('tx-count').textContent=tx.length+' записей';
-  document.getElementById('tx-list').innerHTML=tx.length?tx.map(rowTx).join(''):
-    '<div class="empty"><b>Пока пусто</b>Запишите первую операцию — форма выше.</div>';
+  const all=monthTx().length;
+  document.getElementById('tx-count').textContent=tx.length+' из '+all+' записей месяца';
+  const note=txFilter!=='all'
+    ?`<div class="fnote">Показаны ${TF_NAME[txFilter]} <button onclick="resetTxFilter()">Показать все</button></div>`:'';
+  document.getElementById('tx-list').innerHTML=note+(tx.length?tx.map(rowTx).join(''):
+    (all?'<div class="empty"><b>В этой группе пусто</b>Снимите фильтр, чтобы увидеть остальные операции.</div>'
+        :'<div class="empty"><b>Пока пусто</b>Запишите первую операцию — форма выше.</div>'));
 }
 function rowTx(t){
   let tag='<span class="tag">Доход</span>';
@@ -1401,6 +1422,9 @@ async function boot(){
   renderAll();
 }
 
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(e=>console.log('sw:',e)));
+}
 (async function(){
   await window.cloudReady;
   cloudOn=!!(window.CLOUD&&CLOUD.on);
