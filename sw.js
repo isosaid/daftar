@@ -1,5 +1,5 @@
 // Офлайн-режим: оболочка приложения кэшируется, данные всегда идут по сети.
-const CACHE = 'daftar-2';
+const CACHE = 'daftar-3';
 const SHELL = ['./', './index.html', './config.js', './manifest.json',
                './icons/icon-192.png', './icons/icon-512.png'];
 
