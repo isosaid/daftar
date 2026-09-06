@@ -140,13 +140,15 @@ main{padding:26px 32px 60px;max-width:1180px}
 .sw label{font-size:14px;cursor:pointer}
 
 .rows{display:flex;flex-direction:column}
-.row{display:grid;grid-template-columns:78px 1fr 138px 108px 34px;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:14px}
+.row{display:grid;grid-template-columns:74px 1fr 132px 104px 104px 34px;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:14px}
 .row:last-child{border-bottom:none}
 .row .d{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-3)}
 .row .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .tmeta{display:none}
 .tagw{min-width:0;overflow:hidden}
 .row .a{font-family:'IBM Plex Mono',monospace;text-align:right;font-weight:500}
+.bal{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-3);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bal.over{color:var(--anor)}
 .a.in{color:var(--firuza)}.a.save{color:#2E8B57}.a.out{color:var(--ink)}
 .tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 9px;border-radius:99px;background:var(--paper);color:var(--ink-2);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .tag .dot{width:6px;height:6px;border-radius:50%;flex:none}
@@ -316,7 +318,7 @@ main{padding:26px 32px 60px;max-width:1180px}
 
   /* списки операций: описание + дата и категория под ним */
   .row{grid-template-columns:1fr auto 34px;gap:10px;padding:11px 2px;align-items:center}
-  .row .d,.row .tagw{display:none}
+  .row .d,.row .tagw,.row .bal{display:none}
   .row .t{font-size:14.5px;white-space:normal;line-height:1.3;display:flex;flex-direction:column;gap:2px}
   .row .tmeta{display:block;font-style:normal;font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .row .a{font-size:15.5px;white-space:nowrap}
@@ -987,9 +989,27 @@ function typeChanged(){
   document.getElementById('f-cat-wrap').style.display=t==='out'?'flex':'none';
   document.getElementById('f-goal-wrap').style.display=t==='save'?'flex':'none';
 }
+function catOptions(){
+  const tx=monthTx();
+  return B().cats.map(c=>{
+    const sp=tx.filter(t=>t.cat===c.id).reduce((s,t)=>s+t.amt,0);
+    const left=c.plan-sp;
+    const tail=c.plan?(left>=0?' — осталось '+som(left):' — сверх лимита '+som(-left)):' — потрачено '+som(sp);
+    return `<option value="${c.id}">${esc(c.name)}${tail}</option>`;
+  }).join('');
+}
+function goalOptions(){
+  if(!B().goals.length)return '<option value="">Целей пока нет</option>';
+  return B().goals.map(g=>{
+    const s=goalSaved(g.id);
+    return `<option value="${g.id}">${esc(g.name)} — ${som(s)} из ${som(g.target)}</option>`;
+  }).join('');
+}
 function fillSelects(){
-  document.getElementById('f-cat').innerHTML=B().cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  document.getElementById('f-goal').innerHTML=B().goals.length?B().goals.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join(''):'<option value="">Целей пока нет</option>';
+  const c=document.getElementById('f-cat'), g=document.getElementById('f-goal');
+  const cv=c.value, gv=g.value;
+  c.innerHTML=catOptions(); g.innerHTML=goalOptions();
+  if(cv)c.value=cv; if(gv)g.value=gv;
 }
 function addTx(){
   const type=document.getElementById('f-type').value;
@@ -1090,8 +1110,8 @@ function opTypeChanged(){
 function openOp(id){
   const t=B().tx.find(x=>x.id===id); if(!t)return;
   editOp=id;
-  document.getElementById('o-cat').innerHTML=B().cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  document.getElementById('o-goal').innerHTML=B().goals.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('')||'<option value="">Целей нет</option>';
+  document.getElementById('o-cat').innerHTML=catOptions();
+  document.getElementById('o-goal').innerHTML=goalOptions();
   document.getElementById('o-type').value=t.type;
   document.getElementById('o-amt').value=t.amt;
   document.getElementById('o-desc').value=t.desc;
@@ -1233,6 +1253,7 @@ function renderMoney(){
       ${c?`<div class="carry">включая перенос ${som(c)}</div>`:`<div class="m">${rp?'месяц начат с нуля':'без переноса'}</div>`}</div>`;
   document.getElementById('reset-flag').innerHTML=rp===key(cur)
     ?`<div class="reset-note">Этот месяц начат заново${B().resets[rp]?' с суммы '+som(B().resets[rp]):' с нуля'}. Перенос из прошлых месяцев не учитывается. <button class="btn btn-sm" style="margin-left:6px" onclick="undoReset()">Вернуть перенос</button></div>`:'';
+  BAL=computeBalances();
   renderEnvs(tx);renderTx();renderDashTx(tx);renderReport();renderLimits();renderBudgetSel();fillSelects();typeChanged();
 }
 function renderEnvs(tx){
@@ -1256,6 +1277,7 @@ function resetTxFilter(){
 }
 const TF_NAME={in:'только доходы',out:'только расходы',save:'только пополнения целей'};
 function renderTx(){
+  BAL=computeBalances();
   const q=(document.getElementById('tx-search').value||'').toLowerCase();
   let tx=monthTx().filter(t=>(!q||t.desc.toLowerCase().includes(q))&&(txFilter==='all'||t.type===txFilter));
   tx.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
@@ -1267,6 +1289,26 @@ function renderTx(){
     (all?'<div class="empty"><b>В этой группе пусто</b>Снимите фильтр, чтобы увидеть остальные операции.</div>'
         :'<div class="empty"><b>Пока пусто</b>Запишите первую операцию — форма выше.</div>'));
 }
+let BAL={};
+function computeBalances(){
+  const map={}, spent={}, saved={};
+  // конверты — лимит месячный, считаем в пределах выбранного месяца
+  monthTx().slice().sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id).forEach(t=>{
+    if(t.type!=='out')return;
+    const c=cat(t.cat); if(!c){map[t.id]='';return}
+    spent[c.id]=(spent[c.id]||0)+t.amt;
+    const left=c.plan-spent[c.id];
+    map[t.id]=c.plan?(left>=0?'ост. '+som(left):'сверх '+som(-left)):'всего '+som(spent[c.id]);
+  });
+  // цели — копятся без привязки к месяцу
+  B().tx.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id).forEach(t=>{
+    if(t.type!=='save')return;
+    const g=goal(t.goalId); if(!g){map[t.id]='';return}
+    saved[g.id]=(saved[g.id]||0)+t.amt;
+    map[t.id]=som(saved[g.id])+' из '+som(g.target);
+  });
+  return map;
+}
 function rowTx(t){
   let tag='<span class="tag">Доход</span>';
   if(t.type==='out'){const c=cat(t.cat);tag=c?`<span class="tag"><span class="dot" style="background:${c.color}"></span>${esc(c.name)}</span>`:'<span class="tag">Без конверта</span>'}
@@ -1276,10 +1318,12 @@ function rowTx(t){
   if(t.type==='out'){const c=cat(t.cat);plain=c?c.name:'Без конверта'}
   if(t.type==='save'){const g=goal(t.goalId);plain='Цель: '+(g?g.name:'—')}
   plain=esc(plain);
+  const bal=BAL[t.id]||'';
   return `<div class="row click" onclick="openOp(${t.id})" title="Изменить">
     <span class="d">${t.date.slice(8)}.${t.date.slice(5,7)}</span>
-    <span class="t">${esc(t.desc)}<em class="tmeta">${t.date.slice(8)}.${t.date.slice(5,7)} · ${plain}</em></span><span class="tagw">${tag}</span>
+    <span class="t">${esc(t.desc)}<em class="tmeta">${t.date.slice(8)}.${t.date.slice(5,7)} · ${plain}${bal?" · "+bal:""}</em></span><span class="tagw">${tag}</span>
     <span class="a ${t.type}">${sign}${som(t.amt)}</span>
+    <span class="bal ${bal.startsWith('сверх')?'over':''}">${bal}</span>
     <button class="x" onclick="event.stopPropagation();delTx(${t.id})" aria-label="Удалить">×</button></div>`;
 }
 function renderDashTx(tx){
